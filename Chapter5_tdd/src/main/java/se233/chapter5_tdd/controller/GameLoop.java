@@ -1,25 +1,34 @@
 package se233.chapter5_tdd.controller;
 
+import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
+import javafx.stage.Popup;
+import se233.chapter5_tdd.Launcher;
 import se233.chapter5_tdd.model.Direction;
 import se233.chapter5_tdd.model.Food;
 import se233.chapter5_tdd.model.Snake;
+import se233.chapter5_tdd.model.SpecialFood;
 import se233.chapter5_tdd.view.Platform;
+import se233.chapter5_tdd.view.Score;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 
 public class GameLoop implements Runnable {
     private Platform platform;
     private Snake snake;
     private Food food;
+    private SpecialFood specialFood;
     private float interval = 1000.0f / 10;
     private boolean running;
-
-    public GameLoop(Platform platform, Snake snake, Food food) {
+    private int score;
+    public GameLoop(Platform platform, Snake snake, Food food, SpecialFood specialFood) {
         this.snake = snake;
         this.platform = platform;
         this.food = food;
+        this.specialFood = specialFood;
         running = true;
     }
-
     private void update() {
         KeyCode cur_key = platform.getKey();
         Direction cur_direction = snake.getCurrentDirection();
@@ -33,26 +42,32 @@ public class GameLoop implements Runnable {
             snake.setCurrentDirection(Direction.RIGHT);
         snake.update();
     }
-
     private void checkCollision() {
         if (snake.isCollidingWith(food)) {
             snake.grow();
             food.respawn();
+            this.score++;
+        } else if (snake.isCollidingWith(specialFood)) {
+            snake.specialGrow();
+            specialFood.respawn();
+            this.score += 5;
         }
-        if (snake.isDead()) {
-            running = false;
-        }
+        if (snake.isDead()) { running = false; }
     }
-
-    private void redraw() {
-        platform.render(snake, food);
+    public void updateScore(ArrayList<Score> scoreList) {
+        javafx.application.Platform.runLater(() -> {
+            for (int i = 0; i < scoreList.size(); i++) {
+                scoreList.get(i).setPoint(score);
+            }
+        });
     }
-
+    private void redraw() { platform.render(snake, food, specialFood); }
     @Override
     public void run() {
         while (running) {
             update();
             checkCollision();
+            updateScore(platform.getScoreList());
             redraw();
             try {
                 Thread.sleep((long) interval);
@@ -60,25 +75,27 @@ public class GameLoop implements Runnable {
                 e.printStackTrace();
             }
         }
+        javafx.application.Platform.runLater(() -> {
+            Label text = new Label();
+            text.setText("Game Over");
+            text.setStyle("-fx-font-size: 26px;");
+            Popup popup = new Popup();
+            popup.getContent().add(text);
+            popup.show(Launcher.primaryStage);
+        });
     }
 
-    public Platform getPlatform() {
-        return platform;
-    }
+    public Snake getSnake() { return snake; }
 
-    public Snake getSnake() {
-        return snake;
-    }
+    public Platform getPlatform() { return platform; }
 
-    public Food getFood() {
-        return food;
-    }
+    public Food getFood() { return food; }
 
-    public float getInterval() {
-        return interval;
-    }
+    public SpecialFood getSpecialFood() { return specialFood; }
 
-    public boolean isRunning() {
-        return running;
-    }
+    public int getScore() { return score; }
+
+    public float getInterval() { return interval; }
+
+    public boolean isRunning() { return running; }
 }

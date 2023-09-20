@@ -1,9 +1,9 @@
 package se233.chapter5_tdd.model;
 
 import javafx.geometry.Point2D;
+import se233.chapter5_tdd.view.Platform;
 
 import java.util.Random;
-import se233.chapter5_tdd.view.Platform;
 
 public class Food {
     private Point2D position;
@@ -20,7 +20,7 @@ public class Food {
         Point2D prev_position = this.position;
         do {
             this.position = new Point2D(rn.nextInt(Platform.WIDTH), rn.nextInt(Platform.HEIGHT));
-        }while(prev_position == this.position);
+        } while (prev_position == this.position);
     }
     public Point2D getPosition() { return position; }
 }
