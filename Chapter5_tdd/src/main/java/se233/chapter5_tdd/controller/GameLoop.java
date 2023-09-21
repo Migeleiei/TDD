@@ -1,34 +1,56 @@
 package se233.chapter5_tdd.controller;
 
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Popup;
+import javafx.stage.Stage;
 import se233.chapter5_tdd.Launcher;
 import se233.chapter5_tdd.model.Direction;
 import se233.chapter5_tdd.model.Food;
 import se233.chapter5_tdd.model.Snake;
-import se233.chapter5_tdd.model.SpecialFood;
 import se233.chapter5_tdd.view.Platform;
-import se233.chapter5_tdd.view.Score;
-
-import java.lang.reflect.Field;
-import java.util.ArrayList;
+import se233.chapter5_tdd.Launcher;
 
 public class GameLoop implements Runnable {
     private Platform platform;
     private Snake snake;
     private Food food;
-    private SpecialFood specialFood;
     private float interval = 1000.0f / 10;
     private boolean running;
-    private int score;
-    public GameLoop(Platform platform, Snake snake, Food food, SpecialFood specialFood) {
+    private Alert alert;
+    private int score = 0;
+    public void addScore(int sc){
+        setScore(getScore()+sc);
+        System.out.println("score is now ; " + getScore());
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public void setScore(int score) {
+        this.score = score;
+    }
+
+    public Alert getAlert() {
+        return alert;
+    }
+
+    public void setAlert(Alert alert) {
+        this.alert = alert;
+    }
+
+    public GameLoop(Platform platform, Snake snake, Food food) {
         this.snake = snake;
         this.platform = platform;
         this.food = food;
-        this.specialFood = specialFood;
         running = true;
     }
+
     private void update() {
         KeyCode cur_key = platform.getKey();
         Direction cur_direction = snake.getCurrentDirection();
@@ -45,57 +67,82 @@ public class GameLoop implements Runnable {
     private void checkCollision() {
         if (snake.isCollidingWith(food)) {
             snake.grow();
+            // ex 2 // adding score
+            addScore(food.getScore());
             food.respawn();
-            this.score++;
-        } else if (snake.isCollidingWith(specialFood)) {
-            snake.specialGrow();
-            specialFood.respawn();
-            this.score += 5;
         }
         if (snake.isDead()) { running = false; }
     }
-    public void updateScore(ArrayList<Score> scoreList) {
-        javafx.application.Platform.runLater(() -> {
-            for (int i = 0; i < scoreList.size(); i++) {
-                scoreList.get(i).setPoint(score);
-            }
-        });
-    }
-    private void redraw() { platform.render(snake, food, specialFood); }
+    private void redraw() { platform.render(snake,food,score); }
     @Override
     public void run() {
         while (running) {
             update();
             checkCollision();
-            updateScore(platform.getScoreList());
             redraw();
             try {
-                Thread.sleep((long) interval);
+                Thread.sleep((long)interval);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+        // ex 1 // game over, create popup here
+        System.out.println("running stopped");
+        // Use Platform.runLater to make UI changes on the JavaFX Application Thread
         javafx.application.Platform.runLater(() -> {
-            Label text = new Label();
-            text.setText("Game Over");
-            text.setStyle("-fx-font-size: 26px;");
-            Popup popup = new Popup();
-            popup.getContent().add(text);
-            popup.show(Launcher.primaryStage);
+            showGameOverPopup();
         });
     }
+    private void showGameOverPopup() {
+    // popup method (ex1)
+        alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Game Over");
+        alert.setHeaderText(null);
+        alert.setContentText("Your game is over. please restart the game");
+        alert.setOnHiding(e -> { // close game after finish
+            System.exit(0);
+        });
+        alert.showAndWait();
+    }
 
-    public Snake getSnake() { return snake; }
+    // getter and setter
+    public Platform getPlatform() {
+        return platform;
+    }
 
-    public Platform getPlatform() { return platform; }
+    public void setPlatform(Platform platform) {
+        this.platform = platform;
+    }
 
-    public Food getFood() { return food; }
+    public Snake getSnake() {
+        return snake;
+    }
 
-    public SpecialFood getSpecialFood() { return specialFood; }
+    public void setSnake(Snake snake) {
+        this.snake = snake;
+    }
 
-    public int getScore() { return score; }
+    public Food getFood() {
+        return food;
+    }
 
-    public float getInterval() { return interval; }
+    public void setFood(Food food) {
+        this.food = food;
+    }
 
-    public boolean isRunning() { return running; }
+    public float getInterval() {
+        return interval;
+    }
+
+    public void setInterval(float interval) {
+        this.interval = interval;
+    }
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    public void setRunning(boolean running) {
+        this.running = running;
+    }
 }

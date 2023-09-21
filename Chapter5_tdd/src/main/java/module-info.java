@@ -1,7 +1,7 @@
 module se233.chapter5_tdd {
     requires javafx.controls;
     requires javafx.fxml;
-    requires javafx.swing;
+    requires junit;
 
 
     opens se233.chapter5_tdd to javafx.fxml;
